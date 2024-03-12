@@ -4,16 +4,26 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
+import { CepService } from '../core/consulta-cep/consulta-cep.service';
+import { ICepService } from '../core/consulta-cep/consulta-cep';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private userRepository: Repository<User>
+    private userRepository: Repository<User>,
+    private cepService: ICepService,
   ) { }
 
   async create(createUserDto: CreateUserDto) {
+    const endereco = await this.cepService.buscarCidadePorCep(createUserDto.cep);
     const user = this.userRepository.create(createUserDto);
+
+    user.cidade = endereco.cidade;
+    user.estado = endereco.estado;
+    user.logradouro = endereco.logradouro;
+    user.cep = endereco.cep;
+
     return await this.userRepository.save(user);
   }
 
@@ -25,19 +35,20 @@ export class UsersService {
     const user = await this.userRepository.findOneBy({ id: id });
 
     if (!user) {
-      throw new NotFoundException('Usuário não encontrado')
+      throw new NotFoundException('Usuário não encontrado!')
     }
 
     return user;
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const result = await this.userRepository.update(id, updateUserDto);
-    
+    const user = this.userRepository.create(updateUserDto);
+    const result = await this.userRepository.update(id, user);
+
     if (result.affected === 0) {
-      throw new NotFoundException('Usuário não encontrado')
+      throw new NotFoundException('Usuário não encontrado!');
     }
-    
+
     return result;
   }
 
@@ -45,7 +56,7 @@ export class UsersService {
     const result = await this.userRepository.delete(id);
 
     if (result.affected === 0) {
-      throw new NotFoundException('Usuário não encontrado')
+      throw new NotFoundException('Usuário não encontrado!')
     }
 
     return result;
