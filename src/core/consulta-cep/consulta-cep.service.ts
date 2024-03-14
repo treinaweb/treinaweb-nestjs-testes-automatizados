@@ -22,9 +22,9 @@ export class CepService implements ICepService{
       cidade.cidade = response.data.localidade;
       cidade.estado = response.data.uf;
       cidade.logradouro = response.data.logradouro;
-      cidade.cep = response.data.cep
+      cidade.cep = response.data.cep;
 
-      if (response.data.erro === "true") {
+      if (response.data.erro === true) {
         throw new NotFoundException();
       }
 
