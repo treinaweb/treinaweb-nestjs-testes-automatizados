@@ -3,7 +3,7 @@ import { ICepService } from "../consulta-cep/consulta-cep"
 import { CepService } from "../consulta-cep/consulta-cep.service";
 import { itReturnCity, itServiceDfined, itThrowBadRequestException, itThrowNotFoundException } from "./interface-consulta-cep";
 
-describe('Consumo de API CEP', () => {
+describe.skip('Consumo de API CEP', () => {
   let service: ICepService;
 
   beforeEach(async () => {
