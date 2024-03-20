@@ -6,3 +6,10 @@ export const config: DataSourceOptions = {
   synchronize: true,
   entities: [__dirname + '/**/*.entity.{ts,js}'],
 };
+
+export const configTest: DataSourceOptions = {
+  type: 'sqlite',
+  database: '.db/sqlTest',
+  synchronize: true,
+  entities: [__dirname + '/**/*.entity.{ts,js}'],
+};
