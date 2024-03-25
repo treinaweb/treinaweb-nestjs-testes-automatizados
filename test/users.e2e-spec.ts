@@ -14,11 +14,9 @@ describe('UsersController (e2e)', () => {
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule, TypeOrmModule.forRoot(configTest)],
-      providers: [{
-        provide: ICepService,
-        useClass: CepServiceMock,
-      }]
-    }).compile();
+    }).overrideProvider(ICepService)
+      .useClass(CepServiceMock)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
@@ -149,6 +147,115 @@ describe('UsersController (e2e)', () => {
       error: 'Bad Request',
       message: ['nome must be longer than or equal to 3 characters'],
       statusCode: 400,
+    })
+  })
+
+  it('/users (PATCH) - Deve atualizar usuário já cadastrado com sucesso', async () => {
+    await request(app.getHttpServer())
+      .post('/users')
+      .send({
+        nome: 'Wesley',
+        email: 'wesley@teste.com',
+        password: '123123123',
+        cep: '07020321'
+      })
+
+    const response = await request(app.getHttpServer())
+      .patch('/users/1')
+      .send({
+        nome: 'Wesley Oliveira',
+        email: 'wesley.oliveira@teste.com'
+      })
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      affected: 1,
+      generatedMaps: [],
+      raw: [],
+    })
+  })
+
+  it('/users (PATCH) - Deve lançar NotFoundException ao tentar atualizar usuário não existente', async () => {
+    const response = await request(app.getHttpServer())
+      .patch('/users/42')
+      .send({
+        nome: 'Wesley Oliveira',
+        email: 'wesley.oliveira@teste.com'
+      })
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      error: 'Not Found',
+      message: 'Usuário não encontrado!',
+      statusCode: 404,
+    })
+  })
+
+  it('/users (DELETE) - Deve excluir usuário já cadastrado com sucesso', async () => {
+    await request(app.getHttpServer())
+      .post('/users')
+      .send({
+        nome: 'Wesley',
+        email: 'wesley@teste.com',
+        password: '123123123',
+        cep: '07020321'
+      })
+
+    const response = await request(app.getHttpServer())
+      .delete('/users/1');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      affected: 1,
+      raw: [],
+    })
+  })
+
+  it('/users (DELETE) - Deve lançar NotFoundException ao tentar excluir usuário não existente', async () => {
+    const response = await request(app.getHttpServer())
+      .delete('/users/42');
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      error: 'Not Found',
+      message: 'Usuário não encontrado!',
+      statusCode: 404,
+    })
+  })
+
+  it('/users/:id (GET) - Deve retornar usuário válido por id', async () => {
+    await request(app.getHttpServer())
+      .post('/users')
+      .send({
+        nome: 'Wesley',
+        email: 'wesley@teste.com',
+        password: '123123123',
+        cep: '07020321'
+      })
+
+    const response = await request(app.getHttpServer()).get('/users/1');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      nome: 'Wesley',
+      email: 'wesley@teste.com',
+      password: '123123123',
+      cep: '07020-321',
+      cidade: 'Guarulhos',
+      estado: 'SP',
+      logradouro: 'Rua Utama',
+      id: 1
+    })
+  })
+
+  it('/users/:id (GET) - Deve retornar NotFoundException ao buscar usuário inexistente por id', async () => {
+    const response = await request(app.getHttpServer()).get('/users/45');
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      error: 'Not Found',
+      message: 'Usuário não encontrado!',
+      statusCode: 404,
     })
   })
 });
